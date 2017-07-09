@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">SunInLaw</string>
+    <string name="gpsNo">The App requires your GPS to be on.</string>
+    <string name="openLoc">We need this stuff to be on.</string>
+    <string name="gpsTharilla">SunInLaw</string>
+
+
+</resources>
