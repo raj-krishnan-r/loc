@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -18,18 +19,25 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 
 public class MainActivity extends AppCompatActivity {
 
     Location locc = null;
+    int zooml=15;
+    int mapytype = 1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         LocationManager locman = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -56,11 +64,12 @@ public class MainActivity extends AppCompatActivity {
         }
         if(!locStat&&!netStat)
         {
-            Toast toast = Toast.makeText(getApplicationContext(),"SunInLaw Requires GPS to be on !", Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(getApplicationContext(),"Mars requires GPS to be on !", Toast.LENGTH_SHORT);
             toast.show();
             Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             myIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             getApplicationContext().startActivity(myIntent);
+            getLoc(locman);
                     //get gps
 
         }
@@ -70,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         final SeekBar birthdaySlider = (SeekBar) findViewById(R.id.zoomLevel);
+        final Switch maptypeSwitch = (Switch) findViewById(R.id.mapType);
 
         birthdaySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -81,12 +91,21 @@ public class MainActivity extends AppCompatActivity {
                 String latS = String.valueOf(lat);
                 String lngS = String.valueOf(lng);
                 String zoom = String.valueOf(progress);
+                zooml=progress;
 
                 Toast toast = Toast.makeText(getApplicationContext(), "Zooming level : "+zoom, Toast.LENGTH_SHORT);
                 toast.show();
+                if(mapytype==1)
+                {
+                    String url = "https://maps.googleapis.com/maps/api/staticmap?maptype=roadmap&center="+latS+","+lngS+"&zoom="+zoom+"&size=400x400&markers=color:blue|"+latS+","+lngS+"&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw";
+                    new DownloadImageTask((ImageView) findViewById(R.id.mapStatic)).execute(url);                }
+                else
+                {
+                    String url = "https://maps.googleapis.com/maps/api/staticmap?maptype=hybrid&center="+latS+","+lngS+"&zoom="+zoom+"&size=400x400&markers=color:blue|"+latS+","+lngS+"&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw";
+                    new DownloadImageTask((ImageView) findViewById(R.id.mapStatic)).execute(url);
+                }
 
-                String url = "https://maps.googleapis.com/maps/api/staticmap?center="+latS+","+lngS+"&zoom="+zoom+"&size=400x400&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw";
-                new DownloadImageTask((ImageView) findViewById(R.id.mapStatic)).execute(url);
+
 
 
             }
@@ -104,81 +123,176 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+        maptypeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if(b)
+                {
+                    mapytype=2;
+                    double lat,lng;
+                    lat = locc.getLatitude();
+                    lng = locc.getLongitude();
+                    String latS = String.valueOf(lat);
+                    String lngS = String.valueOf(lng);
+                    String url = "https://maps.googleapis.com/maps/api/staticmap?maptype=hybrid&center="+latS+","+lngS+"&zoom="+zooml+"&size=400x400&markers=color:blue|"+latS+","+lngS+"&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw";
+                    new DownloadImageTask((ImageView) findViewById(R.id.mapStatic)).execute(url);
+                }
+                else
+                {
+                    mapytype=1;
+                    double lat,lng;
+                    lat = locc.getLatitude();
+                    lng = locc.getLongitude();
+                    String latS = String.valueOf(lat);
+                    String lngS = String.valueOf(lng);
+                    String url = "https://maps.googleapis.com/maps/api/staticmap?maptype=roadmap&center="+latS+","+lngS+"&zoom="+zooml+"&size=400x400&markers=color:blue|"+latS+","+lngS+"&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw";
+                    new DownloadImageTask((ImageView) findViewById(R.id.mapStatic)).execute(url);
+                }
+            }
+        });
+
+
     }
 
     public void getLoc(LocationManager locman) {
         final ImageView imageView = (ImageView) findViewById(R.id.mapStatic);
         final TextView tv = (TextView) findViewById(R.id.tv);
+        final TextView acc = (TextView) findViewById(R.id.accuracy);
+        final TextView ti = (TextView) findViewById(R.id.time);
+        final TextView sped = (TextView) findViewById(R.id.speed);
+        final TextView intStatus = (TextView) findViewById(R.id.intStatus);
 
-        LocationListener loclis = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                locc = location;
-                double lat,lng;
-                lat = location.getLatitude();
-                lng = location.getLongitude();
-                String latS = String.valueOf(lat);
-                String lngS = String.valueOf(lng);
-                Toast toast = Toast.makeText(getApplicationContext(), location.toString(), Toast.LENGTH_SHORT);
-                //toast.show();
-                try {
-                  /*
-                    URL url = new URL("https://maps.googleapis.com/maps/api/staticmap?center="+latlng+"&zoom=12&size=400x400&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw");
-                    Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-                    imageView.setImageBitmap(bmp);
-*/
+        locman.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, new LocationListener() {
+    @Override
+    public void onLocationChanged(Location location) {
 
-                    //URL url = new URL("https://maps.googleapis.com/maps/api/staticmap?center="+latlng+"&zoom=12&size=400x400&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw")
-                   /* URL url = new URL("https://maps.googleapis.com/maps/api/staticmap?center="+latlng+"&zoom=12&size=400x400&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw");
-                    InputStream content = (InputStream)url.getContent();
-                    Drawable d = Drawable.createFromStream(content , "src");
-                    imageView.setImageDrawable(d);
-*/
-                    String url = "https://maps.googleapis.com/maps/api/staticmap?center="+latS+","+lngS+"&zoom=20&size=400x400&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw";
-                    Toast toastr = Toast.makeText(getApplicationContext(),url, Toast.LENGTH_LONG);
-                   // toastr.show();
-                    new DownloadImageTask((ImageView) findViewById(R.id.mapStatic)).execute(url);
+      if(isNetworkConnected())
+      {
+          intStatus.setText("");
+      }
+        else
+      {
+          intStatus.setText("Can't load maps since Internet not available.");
+
+      }
+        locc = location;
+        double lat,lng;
+        double accuracy;
+        long tim;
+        float speed;
+        accuracy=Math.round(location.getAccuracy());
+        tim=location.getTime();
+        String timeS = String.valueOf(tim);
+        lat = location.getLatitude();
+        lng = location.getLongitude();
+        speed = location.getSpeed();
+
+        double flat = (lat);
+        double flon = (lng);
+        String latS = String.valueOf(lat);
+        String lngS = String.valueOf(lng);
+
+        String accurate = String.valueOf(accuracy+"meters");
+
+        if(accuracy<50)
+        {
+            acc.setText("Accuracy : "+accurate +" (Good)");
+
+        }
+        else if(accuracy<100)
+        {
+            acc.setText("Accuracy : "+accurate +" (Good enough)");
+
+        }
+        else if(accuracy<500)
+        {
+            acc.setText("Accuracy : "+accurate +" (Bad)");
+
+        }
+        else
+        {
+            acc.setText("Accuracy : "+accurate +" (Poor)");
+
+        }
+
+        float mps2kph = Math.round(speed*(18/5));
+                 String speeder = String.valueOf(mps2kph) + "Kmph";
+            sped.setText("Speed "+speeder);
+
+        tv.setText("Coords : "+String.format("%.4f",flat)+","+String.format("%.4f",flon));
+        //Toast toast = Toast.makeText(getApplicationContext(), accurate, Toast.LENGTH_LONG);
+        //toast.show();
 
 
-                }
-                catch(Exception ex)
-                {
-                    Toast toastr = Toast.makeText(getApplicationContext(),ex.toString(), Toast.LENGTH_LONG);
-                    //toastr.show();
-                }
-
-                tv.setText(location.toString());
+        ti.setText("Regional Time :"+epochTo(timeS));
 
 
+        //Toast toast = Toast.makeText(getApplicationContext(), location.toString(), Toast.LENGTH_SHORT);
+        //toast.show();
+        try {
+
+
+            String zoom = String.valueOf(zooml);
+
+            if(mapytype==1)
+            {
+                String url = "https://maps.googleapis.com/maps/api/staticmap?maptype=roadmap&center="+latS+","+lngS+"&zoom="+zoom+"&size=400x400&markers=color:blue|"+latS+","+lngS+"&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw";
+                new DownloadImageTask((ImageView) findViewById(R.id.mapStatic)).execute(url);                }
+            else
+            {
+                String url = "https://maps.googleapis.com/maps/api/staticmap?maptype=hybrid&center="+latS+","+lngS+"&zoom="+zoom+"&size=400x400&markers=color:blue|"+latS+","+lngS+"&key=AIzaSyBqpM4FCdaD3dz4MuYv1sE3f0iHDYqPBNw";
+                new DownloadImageTask((ImageView) findViewById(R.id.mapStatic)).execute(url);
             }
 
-            @Override
-            public void onStatusChanged(String s, int i, Bundle bundle) {
-                Toast toast = Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG);
-                toast.show();
-               // tv.setText(s);
 
 
-            }
+        }
+        catch(Exception ex)
+        {
+            Toast toastr = Toast.makeText(getApplicationContext(),ex.toString(), Toast.LENGTH_LONG);
+            //toastr.show();
+        }
+    }
 
-            @Override
-            public void onProviderEnabled(String s) {
-                Toast toast = Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG);
-                toast.show();
-
-            }
-
-            @Override
-            public void onProviderDisabled(String s) {
-                Toast toast = Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG);
-                toast.show();
-            }
-        };
-
-        locman.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, loclis);
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
 
     }
 
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+});
+
+    }
+
+    public String epochTo(String args) {
+        String x = args;
+        try {
+            DateFormat formatter = new SimpleDateFormat("dd MMMM yyyy hh:mm:ss a");
+            long milliSeconds = Long.parseLong(x);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(milliSeconds);
+            return(formatter.format(calendar.getTime()));
+
+        }
+        catch(Exception e)
+        {
+            return args;
+        }
+    }
+
+    private boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return cm.getActiveNetworkInfo() != null;
+    }
 
 
 }
@@ -187,6 +301,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     public DownloadImageTask(ImageView bmImage) {
+
+
         this.bmImage = bmImage;
     }
 

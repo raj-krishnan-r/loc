@@ -14,30 +14,105 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="16dp"
-        android:weightSum="1">
+        android:layout_height="match_parent">
 
-        <TextView
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Fetching location..."
-            android:id="@+id/tv" />
+            android:layout_height="wrap_content">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="398dp"
-            android:id="@+id/mapStatic" />
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="283dp"
+                android:layout_height="match_parent">
 
-        <SeekBar
-            style="@android:style/Widget.DeviceDefault.Light.SeekBar"
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Please wait, fetching location..."
+                    android:id="@+id/tv" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/accuracy"
+                    android:text="Outdoor environment is recommended for seamless satellite signals." />
+
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+
+                    android:id="@+id/time" />
+
+                <TextView
+                    android:layout_width="match_parent"
+
+                    android:layout_height="wrap_content"
+                    android:id="@+id/speed" />
+
+                <TextView
+                    android:text="Keep Internet connection 'ON' for Maps."
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/intStatus" />
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:max="20"
-            android:progress="15"
-            android:id="@+id/zoomLevel" />
+            android:layout_height="412dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="12dp"
+            android:weightSum="1"
+
+            android:layout_below="@+id/linearLayout">
+
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="341dp"
+                android:id="@+id/mapStatic"
+                android:layout_weight="0.04" />
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="46dp">
+
+                <SeekBar
+                    style="@android:style/Widget.DeviceDefault.Light.SeekBar"
+                    android:layout_width="190dp"
+                    android:layout_height="32dp"
+                    android:max="20"
+                    android:progress="15"
+                    android:id="@+id/zoomLevel"
+                    android:layout_weight="1.50" />
+
+                <Switch
+                    android:text="Hybrid Map"
+                    android:textColor="@color/colorAccent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/mapType"
+                    android:layout_weight="3.21"
+                    android:checked="false" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </LinearLayout>
 
